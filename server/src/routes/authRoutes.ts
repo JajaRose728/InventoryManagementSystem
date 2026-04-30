@@ -1,0 +1,28 @@
+/**
+ * Authentication Routes
+ * POST   /api/auth/register  - Register new user
+ * POST   /api/auth/login     - Login user
+ * GET    /api/auth/me        - Get current user
+ * PUT    /api/auth/profile   - Update user profile
+ */
+
+import { Router } from 'express';
+import { verifyToken } from '../middleware/auth';
+import {
+  registerUser,
+  loginUser,
+  getCurrentUser,
+  updateUserProfile
+} from '../controllers/authController';
+
+const router = Router();
+
+// Public routes
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+
+// Protected routes
+router.get('/me', verifyToken, getCurrentUser);
+router.put('/profile', verifyToken, updateUserProfile);
+
+export default router;
