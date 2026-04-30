@@ -4,12 +4,12 @@
 export const environment = {
   production: false,
   firebase: {
-    apiKey: 'AIzaSyDummyAPIKey1234567890ABCDEFGHIJ',
-    authDomain: 'inventory-system-demo.firebaseapp.com',
-    projectId: 'inventory-system-demo',
-    storageBucket: 'inventory-system-demo.appspot.com',
-    messagingSenderId: '123456789012',
-    appId: '1:123456789012:web:abcdef1234567890abcdef',
-    measurementId: 'G-ABCDEF1234'
-  }
+    apiKey: "AIzaSyD2BZko04BMz401G6bVnr-N_UqkxF4DrWQ",
+    authDomain: "inventorymanagement-8be56.firebaseapp.com",
+    projectId: "inventorymanagement-8be56",
+    storageBucket: "inventorymanagement-8be56.firebasestorage.app",
+    messagingSenderId: "394603767513",
+    appId: "1:394603767513:web:523a5ec09a2cf0165580c8"
+  },
+  useEmulators: false
 };

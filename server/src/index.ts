@@ -1,147 +1,310 @@
 /**
- * Simple Inventory API - No Firebase Required
- * For student projects - uses in-memory storage
+ * Firebase Inventory API
+ * Uses Firebase Realtime Database for data storage
  */
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
+import * as admin from 'firebase-admin';
+import { readFileSync, existsSync } from 'fs';
 
 const app = express();
 const PORT = 3000;
+
+// Initialize Firebase Admin
+let firebaseApp: admin.app.App | null = null;
+
+function initializeFirebase() {
+  if (firebaseApp) return firebaseApp;
+  
+  const useEmulator = process.env.USE_FIRESTORE_EMULATOR === 'true';
+  const serviceAccountPath = './firebase-service-account.json';
+  const hasServiceAccount = existsSync(serviceAccountPath);
+  
+  if (useEmulator && !hasServiceAccount) {
+    // Emulator mode - no credentials needed
+    process.env.FIREBASE_DATABASE_EMULATOR_HOST = process.env.FIREBASE_DATABASE_EMULATOR_HOST || 'localhost:9000';
+    firebaseApp = admin.initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || 'inventory-system-demo'
+    });
+    console.log('✅ Firebase Emulator Mode enabled');
+  } else if (hasServiceAccount) {
+    // Production mode - use service account
+    try {
+      const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
+      firebaseApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.project_id
+      });
+      console.log('✅ Firebase Production Mode enabled');
+    } catch (err) {
+      console.error('❌ Invalid service account file. Using emulator mode instead.');
+      process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
+      firebaseApp = admin.initializeApp({
+        projectId: process.env.FIREBASE_PROJECT_ID || 'inventory-system-demo'
+      });
+      console.log('✅ Firebase Emulator Mode (fallback)');
+    }
+  } else {
+    // No credentials - use emulator
+    process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
+    firebaseApp = admin.initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || 'inventory-system-demo'
+    });
+    console.log('✅ Firebase Emulator Mode (no credentials)');
+  }
+  
+  return firebaseApp;
+}
+
+// Initialize Firebase
+initializeFirebase();
+const db = admin.database();
 
 // Middleware
 app.use(cors({ origin: 'http://localhost:4200' }));
 app.use(express.json());
 
-// In-memory storage
-let users = [
-  { uid: '1', email: 'admin@demo.com', password: 'admin123', displayName: 'Admin User', role: 'admin' }
-];
-
-let products = [
-  { id: '1', name: 'Laptop', sku: 'LAP-001', categoryId: 'cat1', categoryName: 'Electronics', price: 999.99, quantity: 15, description: 'High-end laptop', status: 'active' },
-  { id: '2', name: 'Mouse', sku: 'MOU-001', categoryId: 'cat1', categoryName: 'Electronics', price: 29.99, quantity: 50, description: 'Wireless mouse', status: 'active' },
-  { id: '3', name: 'Notebook', sku: 'NOTE-001', categoryId: 'cat2', categoryName: 'Office Supplies', price: 5.99, quantity: 5, description: 'A5 notebook', status: 'active' }
-];
-
-let categories = [
-  { id: 'cat1', name: 'Electronics', description: 'Electronic devices' },
-  { id: 'cat2', name: 'Office Supplies', description: 'Office materials' }
-];
-
-let nextProductId = 4;
-let nextCategoryId = 3;
-
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ success: true, message: 'OK' });
+  res.json({ success: true, message: 'OK', database: 'Firebase Firestore' });
+});
+
+// Diagnostic endpoint
+app.get('/api/diagnostic', async (req, res) => {
+  try {
+    // Try to get Firestore info
+    const projects = await admin.firestore().listCollections();
+    res.json({ 
+      success: true, 
+      message: 'Firestore connected',
+      collections: projects.map(c => c.id)
+    });
+  } catch (error: any) {
+    res.json({ 
+      success: false, 
+      error: error.message,
+      code: error.code,
+      details: error.toString()
+    });
+  }
 });
 
 // Auth routes
-app.post('/api/auth/register', (req, res) => {
-  const { email, password, displayName } = req.body;
-  if (users.find(u => u.email === email)) {
-    return res.json({ success: false, error: 'Email already exists' });
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, displayName } = req.body;
+    
+    // Check if user exists
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('email', '==', email).get();
+    
+    if (!snapshot.empty) {
+      return res.json({ success: false, error: 'Email already exists' });
+    }
+    
+    // Create user
+    const userData = {
+      email,
+      password, // Note: In production, hash this password!
+      displayName: displayName || email.split('@')[0],
+      role: 'user',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    
+    const docRef = await usersRef.add(userData);
+    const token = 'firebase-token-' + docRef.id;
+    
+    res.json({ success: true, user: { uid: docRef.id, ...userData }, token });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
   }
-  const newUser = { uid: String(users.length + 1), email, password, displayName, role: 'user' };
-  users.push(newUser);
-  res.json({ success: true, user: newUser, token: 'demo-token-' + newUser.uid });
 });
 
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  const user = users.find(u => u.email === email && u.password === password);
-  if (user) {
-    res.json({ success: true, user, token: 'demo-token-' + user.uid });
-  } else {
-    res.json({ success: false, error: 'Invalid credentials' });
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('email', '==', email).get();
+    
+    if (snapshot.empty) {
+      return res.json({ success: false, error: 'Invalid credentials' });
+    }
+    
+    const userDoc = snapshot.docs[0];
+    const userData = userDoc.data();
+    
+    if (userData.password !== password) {
+      return res.json({ success: false, error: 'Invalid credentials' });
+    }
+    
+    const token = 'firebase-token-' + userDoc.id;
+    
+    res.json({ success: true, user: { uid: userDoc.id, ...userData }, token });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
   }
 });
 
 // Product routes
-app.get('/api/products', (req, res) => {
-  let result = [...products];
-  const { search, categoryId } = req.query;
-  if (search) {
-    const s = String(search).toLowerCase();
-    result = result.filter(p => p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s));
-  }
-  if (categoryId) {
-    result = result.filter(p => p.categoryId === categoryId);
-  }
-  res.json({ success: true, data: result, total: result.length });
-});
-
-app.post('/api/products', (req, res) => {
-  const { name, sku, categoryId, categoryName, price, quantity, description, status } = req.body;
-  const newProduct = { id: String(nextProductId++), name, sku, categoryId, categoryName, price, quantity, description, status: status || 'active' };
-  products.push(newProduct);
-  res.json({ success: true, data: newProduct });
-});
-
-app.put('/api/products/:id', (req, res) => {
-  const { id } = req.params;
-  const idx = products.findIndex(p => p.id === id);
-  if (idx >= 0) {
-    products[idx] = { ...products[idx], ...req.body };
-    res.json({ success: true, data: products[idx] });
-  } else {
-    res.json({ success: false, error: 'Product not found' });
+app.get('/api/products', async (req, res) => {
+  try {
+    const { search, categoryId } = req.query;
+    let productsRef = db.collection('products');
+    
+    const snapshot = await productsRef.get();
+    let products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Filter by search
+    if (search) {
+      const searchLower = (search as string).toLowerCase();
+      products = products.filter((p: any) => 
+        p.name.toLowerCase().includes(searchLower) ||
+        p.sku?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Filter by category
+    if (categoryId) {
+      products = products.filter((p: any) => p.categoryId === categoryId);
+    }
+    
+    res.json({ success: true, data: products });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message, data: [] });
   }
 });
 
-app.delete('/api/products/:id', (req, res) => {
-  const { id } = req.params;
-  products = products.filter(p => p.id !== id);
-  res.json({ success: true });
+app.post('/api/products', async (req, res) => {
+  try {
+    const product = req.body;
+    product.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    
+    const docRef = await db.collection('products').add(product);
+    const newProduct = { id: docRef.id, ...product };
+    
+    res.json({ success: true, data: newProduct });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = req.body;
+    product.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    
+    await db.collection('products').doc(id).update(product);
+    
+    res.json({ success: true, data: { id, ...product } });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.collection('products').doc(id).delete();
+    
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
+  }
 });
 
 // Category routes
-app.get('/api/categories', (req, res) => {
-  res.json({ success: true, data: categories });
-});
-
-app.post('/api/categories', (req, res) => {
-  const { name, description } = req.body;
-  const newCategory = { id: 'cat' + nextCategoryId++, name, description };
-  categories.push(newCategory);
-  res.json({ success: true, data: newCategory });
-});
-
-app.put('/api/categories/:id', (req, res) => {
-  const { id } = req.params;
-  const idx = categories.findIndex(c => c.id === id);
-  if (idx >= 0) {
-    categories[idx] = { ...categories[idx], ...req.body };
-    res.json({ success: true, data: categories[idx] });
-  } else {
-    res.json({ success: false, error: 'Category not found' });
+app.get('/api/categories', async (req, res) => {
+  try {
+    const snapshot = await db.collection('categories').get();
+    const categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    res.json({ success: true, data: categories });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message, data: [] });
   }
 });
 
-app.delete('/api/categories/:id', (req, res) => {
-  const { id } = req.params;
-  categories = categories.filter(c => c.id !== id);
-  res.json({ success: true });
+app.post('/api/categories', async (req, res) => {
+  try {
+    const category = req.body;
+    category.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    
+    const docRef = await db.collection('categories').add(category);
+    const newCategory = { id: docRef.id, ...category };
+    
+    res.json({ success: true, data: newCategory });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
+  }
 });
 
-// Swagger UI
-const swaggerDefinition = {
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const category = req.body;
+    category.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    
+    await db.collection('categories').doc(id).update(category);
+    
+    res.json({ success: true, data: { id, ...category } });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.collection('categories').doc(id).delete();
+    
+    res.json({ success: true, message: 'Category deleted' });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Swagger documentation
+const swaggerDocument = {
   openapi: '3.0.0',
-  info: { title: 'Inventory API', version: '1.0.0', description: 'Simple inventory system' },
-  servers: [{ url: 'http://localhost:3000', description: 'Dev' }],
+  info: {
+    title: 'Inventory API',
+    version: '1.0.0',
+    description: 'Firebase-backed Inventory Management System'
+  },
+  servers: [{ url: `http://localhost:${PORT}` }],
   paths: {
-    '/api/auth/login': { post: { tags: ['Auth'], summary: 'Login', responses: { 200: { description: 'OK' } } } },
-    '/api/products': { get: { tags: ['Products'], summary: 'Get products', responses: { 200: { description: 'OK' } } }, post: { tags: ['Products'], summary: 'Create product', responses: { 201: { description: 'OK' } } } },
-    '/api/categories': { get: { tags: ['Categories'], summary: 'Get categories', responses: { 200: { description: 'OK' } } } }
+    '/health': { get: { summary: 'Health check' } },
+    '/api/auth/register': { post: { summary: 'Register user', tags: ['Auth'] } },
+    '/api/auth/login': { post: { summary: 'Login user', tags: ['Auth'] } },
+    '/api/products': {
+      get: { summary: 'Get products', tags: ['Products'] },
+      post: { summary: 'Create product', tags: ['Products'] }
+    },
+    '/api/categories': {
+      get: { summary: 'Get categories', tags: ['Categories'] },
+      post: { summary: 'Create category', tags: ['Categories'] }
+    }
   }
 };
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`\n✅ Server running: http://localhost:${PORT}`);
-  console.log(`📚 Swagger: http://localhost:${PORT}/api-docs`);
-  console.log(`🔐 Demo Login: admin@demo.com / admin123\n`);
+  console.log(`
+╔════════════════════════════════════════════════╗
+║   Inventory Management System - Firebase       ║
+║   Server running on: http://localhost:${PORT}     ║
+║   Swagger Docs: http://localhost:${PORT}/api-docs║
+╚════════════════════════════════════════════════╝
+  `);
 });
+
+export default app;

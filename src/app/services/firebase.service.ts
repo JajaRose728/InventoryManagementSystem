@@ -1,4 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { initializeApp, getApps, FirebaseApp as FirebaseAppType } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { environment } from '../../environments/environment';
 
 /**
@@ -9,63 +13,99 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class FirebaseService {
-  
+  private static app: FirebaseAppType | null = null;
+  private static auth: Auth | null = null;
+  private static db: Firestore | null = null;
+  private static storage: FirebaseStorage | null = null;
+
   static getFirebaseConfig() {
     return environment.firebase;
   }
 
   /**
-   * Initialize Firebase - Call this in app.config.ts
-   * Requirements:
-   * 1. Install Firebase SDK: npm install firebase
-   * 2. Import this method in main app initialization
+   * Initialize Firebase - Synchronous for APP_INITIALIZER
    */
-  static async initializeFirebase() {
-    // Firebase initialization will be handled here
-    // Placeholder for now - will be implemented when Firebase SDK is installed
-    console.log('Firebase initialized with config:', environment.firebase);
-    return true;
+  static initializeFirebase(): Promise<FirebaseAppType> {
+    return new Promise((resolve) => {
+      const apps = getApps();
+      if (apps.length > 0) {
+        this.app = apps[0];
+      } else {
+        this.app = initializeApp(environment.firebase);
+      }
+
+      if (environment.useEmulators) {
+        this.connectToEmulators();
+      }
+
+      console.log('Firebase initialized:', environment.firebase.projectId);
+      resolve(this.app);
+    });
+  }
+
+  /**
+   * Synchronous initialize (for backward compatibility)
+   */
+  static initializeFirebaseSync(): FirebaseAppType {
+    const apps = getApps();
+    if (apps.length > 0) {
+      this.app = apps[0];
+    } else {
+      this.app = initializeApp(environment.firebase);
+    }
+    if (environment.useEmulators) {
+      this.connectToEmulators();
+    }
+    return this.app;
+  }
+
+  /**
+   * Connect to Firebase emulators for local development
+   */
+  private static connectToEmulators() {
+    // Import dynamically to avoid issues in production
+    import('firebase/firestore').then(({ connectFirestoreEmulator }) => {
+      if (this.getFirestore()) {
+        connectFirestoreEmulator(this.getFirestore()!, 'localhost', 8080);
+        console.log('Connected to Firestore emulator at localhost:8080');
+      }
+    });
+
+    import('firebase/auth').then(({ connectAuthEmulator }) => {
+      if (this.getAuth()) {
+        connectAuthEmulator(this.getAuth()!, 'http://localhost:9099', { disableWarnings: true });
+        console.log('Connected to Auth emulator at localhost:9099');
+      }
+    });
   }
 
   /**
    * Get Firestore instance
-   * Usage: const db = this.firebase.getFirestore();
    */
-  static getFirestore() {
-    // Placeholder - returns when Firebase SDK is initialized
-    return null;
+  static getFirestore(): Firestore | null {
+    if (!this.db && this.app) {
+      this.db = getFirestore(this.app);
+    }
+    return this.db;
   }
 
   /**
    * Get Auth instance
-   * Usage: const auth = this.firebase.getAuth();
    */
-  static getAuth() {
-    // Placeholder - returns when Firebase SDK is initialized
-    return null;
+  static getAuth(): Auth | null {
+    if (!this.auth && this.app) {
+      this.auth = getAuth(this.app);
+    }
+    return this.auth;
   }
 
   /**
    * Get Storage instance
-   * Usage: const storage = this.firebase.getStorage();
    */
-  static getStorage() {
-    // Placeholder - returns when Firebase SDK is initialized
-    return null;
+  static getStorage(): FirebaseStorage | null {
+    if (!this.storage && this.app) {
+      this.storage = getStorage(this.app);
+    }
+    return this.storage;
   }
 }
-
-/**
- * SETUP INSTRUCTIONS:
- * 
- * 1. Install Firebase:
- *    npm install firebase
- * 
- * 2. Update this service with actual Firebase imports
- * 3. Use Firestore Emulator for local development:
- *    - Install Firebase Emulator Suite: npm install -g firebase-tools
- *    - Run: firebase emulators:start
- *    - Enable emulator in FirebaseService when environment.development is true
- * 
- * 4. Environment variables in .env file
- */

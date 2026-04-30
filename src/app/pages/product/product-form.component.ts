@@ -2,6 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FirebaseService } from '../../services/firebase.service';
+import {
+  collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, setDoc
+} from 'firebase/firestore';
 
 /**
  * Product Management Component - Add/Edit product with image upload
@@ -54,16 +58,16 @@ import { ActivatedRoute, Router } from '@angular/router';
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Category</option>
-                <option value="electronics">Electronics</option>
-                <option value="clothing">Clothing</option>
-                <option value="books">Books</option>
-                <option value="other">Other</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Books">Books</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 
             <!-- Price -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Price (\$)</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Price (₱)</label>
               <input
                 type="number"
                 step="0.01"
@@ -131,45 +135,6 @@ import { ActivatedRoute, Router } from '@angular/router';
             ></textarea>
           </div>
 
-          <!-- Image Upload -->
-          <div class="mt-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-            <div
-              class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition"
-            >
-              <input
-                #fileInput
-                type="file"
-                multiple
-                accept="image/*"
-                (change)="onFileSelected($event)"
-                class="hidden"
-              />
-              <button
-                type="button"
-                (click)="fileInput.click()"
-                class="text-blue-600 hover:underline font-semibold"
-              >
-                Click to upload
-              </button>
-              <p class="text-gray-500 text-sm mt-2">PNG, JPG, GIF up to 5MB</p>
-            </div>
-
-            <!-- Image Preview -->
-            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div *ngFor="let img of previewImages" class="relative">
-                <img [src]="img" alt="Preview" class="w-full h-32 object-cover rounded-lg" />
-                <button
-                  type="button"
-                  (click)="removeImage(img)"
-                  class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          </div>
-
           <!-- Submit Buttons -->
           <div class="mt-8 flex gap-4">
             <button
@@ -196,6 +161,9 @@ export class ProductFormComponent implements OnInit {
   productForm: FormGroup;
   isEditMode = false;
   previewImages: string[] = [];
+  loading = false;
+  currentProductId = '';
+  private db: any;
 
   constructor(
     private fb: FormBuilder,
@@ -216,12 +184,39 @@ export class ProductFormComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Initialize Firebase
+    FirebaseService.initializeFirebase();
+    this.db = FirebaseService.getFirestore();
+
     // Check if editing existing product
     const productId = this.route.snapshot.paramMap.get('id');
     if (productId) {
       this.isEditMode = true;
-      // Load product data from Firestore
-      // this.productService.getProduct(productId).subscribe(...)
+      this.currentProductId = productId;
+      this.loadProduct(productId);
+    }
+  }
+
+  async loadProduct(productId: string) {
+    try {
+      const docRef = doc(this.db, 'products', productId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        this.productForm.patchValue({
+          name: data['name'] || '',
+          sku: data['sku'] || '',
+          category: data['category'] || '',
+          price: data['price'] || 0,
+          quantity: data['quantity'] || 0,
+          minStock: data['minStock'] || 0,
+          supplier: data['supplier'] || '',
+          status: data['status'] || 'active',
+          description: data['description'] || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error loading product:', error);
     }
   }
 
@@ -240,12 +235,39 @@ export class ProductFormComponent implements OnInit {
     this.previewImages = this.previewImages.filter(img => img !== image);
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (this.productForm.valid) {
+      this.loading = true;
       const formData = this.productForm.value;
-      console.log('Submit product:', formData, 'Images:', this.previewImages);
-      // TODO: Upload to Firebase Storage and save product to Firestore
-      this.router.navigate(['/dashboard']);
+
+      try {
+        const productData = {
+          ...formData,
+          price: parseFloat(formData.price),
+          quantity: parseInt(formData.quantity),
+          minStock: parseInt(formData.minStock),
+          updatedAt: new Date()
+        };
+
+        if (this.isEditMode && this.currentProductId) {
+          // Update existing product
+          const docRef = doc(this.db, 'products', this.currentProductId);
+          await updateDoc(docRef, productData);
+          console.log('Product updated:', this.currentProductId);
+        } else {
+          // Add new product
+          productData.createdAt = new Date();
+          const docRef = await addDoc(collection(this.db, 'products'), productData);
+          console.log('Product created:', docRef.id);
+        }
+
+        this.router.navigate(['/dashboard']);
+      } catch (error) {
+        console.error('Error saving product:', error);
+        alert('Error saving product. Please try again.');
+      } finally {
+        this.loading = false;
+      }
     }
   }
 }

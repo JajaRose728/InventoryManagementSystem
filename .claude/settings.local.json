@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:4000/emulators)",
+      "Bash(firebase emulators:start --only auth,firestore)",
+      "Bash(curl -s \"http://localhost:8080/v1/projects/inventory-system-demo/databases/\\(default\\)/documents\" -H \"Content-Type: application/json\")",
+      "Bash(npm run build)",
+      "Bash(npm install firebase --legacy-peer-deps)"
+    ]
+  }
+}

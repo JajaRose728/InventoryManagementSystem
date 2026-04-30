@@ -1,119 +1,136 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { FirebaseService } from '../../services/firebase.service';
 
 @Component({
   selector: 'app-auth-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
-      <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-8">
-        <!-- Header -->
+    <div class="min-h-screen flex items-center justify-center p-4" [class.dark-bg]="darkMode()">
+      <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-8" [class.dark-card]="darkMode()">
+
+        <button (click)="toggleDark()" class="absolute top-4 right-4 text-2xl">
+          {{ darkMode() ? '☀️' : '🌙' }}
+        </button>
+
         <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold text-gray-900">Inventory</h1>
-          <p class="text-gray-600 mt-2">Management System</p>
+          <h1 class="text-3xl font-bold" [class.text-white]="darkMode()">Inventory</h1>
+          <p [class.text-gray-300]="darkMode()">Management System</p>
         </div>
 
-        <!-- Login Form -->
-        <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5">
-          <!-- Email Field -->
+        <div class="flex mb-6 bg-gray-200 rounded-lg p-1" [class.bg-gray-700]="darkMode()">
+          <button (click)="setMode('login')" [class.bg-white]="loginMode()" class="flex-1 py-2 rounded-md text-blue-600">Login</button>
+          <button (click)="setMode('register')" [class.bg-white]="!loginMode()" class="flex-1 py-2 rounded-md text-blue-600">Register</button>
+        </div>
+
+        <div *ngIf="error()" class="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">{{ error() }}</div>
+        <div *ngIf="successMsg()" class="bg-green-100 text-green-700 px-4 py-2 rounded mb-4">{{ successMsg() }}</div>
+
+        <form (ngSubmit)="onSubmit()" class="space-y-5">
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              formControlName="email"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="you@example.com"
-            />
-            <span
-              *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-              class="text-red-500 text-xs mt-1 block"
-            >
-              Valid email required
-            </span>
+            <label class="block text-sm font-medium mb-2" [class.text-gray-200]="darkMode()">Email</label>
+            <input type="email" [(ngModel)]="email" name="email" required class="w-full px-4 py-2 border rounded-lg"
+                   [class.bg-gray-700]="darkMode()" [class.text-white]="darkMode()" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-2" [class.text-gray-200]="darkMode()">Password</label>
+            <input type="password" [(ngModel)]="password" name="password" required minlength="6" class="w-full px-4 py-2 border rounded-lg"
+                   [class.bg-gray-700]="darkMode()" [class.text-white]="darkMode()" />
           </div>
 
-          <!-- Password Field -->
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              formControlName="password"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-            <span
-              *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-              class="text-red-500 text-xs mt-1 block"
-            >
-              Password required (min 6 characters)
-            </span>
+          <!-- Role selection (Register only) -->
+          <div *ngIf="!loginMode()">
+            <label class="block text-sm font-medium mb-2" [class.text-gray-200]="darkMode()">Select Role</label>
+            <select [(ngModel)]="role" name="role" class="w-full px-4 py-2 border rounded-lg"
+                    [class.bg-gray-700]="darkMode()" [class.text-white]="darkMode()">
+              <option value="user">User (Search & View Only)</option>
+              <option value="admin">Admin (Full CRUD)</option>
+            </select>
           </div>
 
-          <!-- Submit Button -->
-          <button
-            type="submit"
-            [disabled]="loginForm.invalid"
-            class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 rounded-lg transition duration-200"
-          >
-            Sign In
+          <button type="submit" [disabled]="submitting()" class="w-full bg-blue-600 text-white py-2 rounded-lg">
+            {{ submitting() ? 'Loading...' : (loginMode() ? 'Sign In' : 'Create Account') }}
           </button>
         </form>
-
-        <!-- Divider -->
-        <div class="relative my-6">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-300"></div>
-          </div>
-          <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-white text-gray-500">Or</span>
-          </div>
-        </div>
-
-        <!-- Demo Login -->
-        <div class="space-y-2 text-sm text-gray-600">
-          <p class="font-semibold">Demo Credentials:</p>
-          <p><strong>Admin:</strong> admin@demo.com / admin123</p>
-          <p><strong>User:</strong> user@demo.com / user123</p>
-        </div>
-
-        <!-- Sign Up Link -->
-        <p class="text-center mt-6 text-gray-600">
-          Don't have an account?
-          <a href="/register" class="text-blue-600 font-semibold hover:underline">Sign Up</a>
-        </p>
       </div>
     </div>
   `,
-  styles: []
+  styles: [`
+    .dark-bg { background: linear-gradient(to bottom right, #1a1a2e, #16213e); }
+    .dark-card { background-color: #1f2937; color: white; }
+  `]
 })
 export class AuthLoginComponent {
-  loginForm: FormGroup;
+  loginMode = signal(true);
+  darkMode = signal(false);
+  submitting = signal(false);
+  error = signal('');
+  successMsg = signal('');
+  email = '';
+  password = '';
+  role = 'user';
 
-  constructor(
-    private fb: FormBuilder,
-    private router: Router
-  ) {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
-    });
+  constructor(private router: Router) {
+    if (localStorage.getItem('darkMode') === 'true') this.darkMode.set(true);
   }
 
-  onLogin() {
-    if (this.loginForm.valid) {
-      console.log('Login:', this.loginForm.value);
-      // TODO: Call AuthService to login
-      // Redirect to dashboard on success
-      this.router.navigate(['/dashboard']);
+  setMode(mode: 'login' | 'register') {
+    this.loginMode.set(mode === 'login');
+    this.error.set('');
+    this.successMsg.set('');
+  }
+
+  toggleDark() {
+    this.darkMode.update(v => !v);
+    localStorage.setItem('darkMode', String(this.darkMode()));
+  }
+
+  async onSubmit() {
+    if (!this.email || !this.password || this.password.length < 6) {
+      this.error.set('Password must be at least 6 characters');
+      return;
     }
+
+    this.submitting.set(true);
+    this.error.set('');
+    this.successMsg.set('');
+
+    try {
+      const fb = await import('firebase/auth');
+      const auth = FirebaseService.getAuth();
+      if (!auth) { this.error.set('Auth not ready'); this.submitting.set(false); return; }
+
+      if (this.loginMode()) {
+        // Login
+        const { signInWithEmailAndPassword } = fb;
+        await signInWithEmailAndPassword(auth, this.email, this.password);
+        this.router.navigate(['/dashboard']);
+      } else {
+        // Register + save role
+        const { createUserWithEmailAndPassword } = fb;
+        const userCred = await createUserWithEmailAndPassword(auth, this.email, this.password);
+
+        // Save role to Firestore
+        const { doc, setDoc } = await import('firebase/firestore');
+        const db = FirebaseService.getFirestore();
+        if (db) {
+          await setDoc(doc(db, 'users', userCred.user.uid), {
+            uid: userCred.user.uid,
+            email: this.email,
+            role: this.role,
+            createdAt: new Date()
+          });
+        }
+
+        this.successMsg.set('Account created! Please login.');
+        this.email = ''; this.password = '';
+        this.setMode('login');
+      }
+    } catch (e: any) { this.error.set(e.message || 'Failed'); }
+
+    this.submitting.set(false);
   }
 }
