@@ -15,21 +15,16 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
-  batchDeleteProducts,
-  getLowStockProducts,
-  getAuditLogs
 } from '../controllers/productController';
 
 const router = Router();
 
-// All product routes require authentication
+// Basic CRUD (auth required)
 router.get('/', verifyToken, getProducts);
 router.get('/:id', verifyToken, getProduct);
 router.post('/', verifyToken, createProduct);
 router.put('/:id', verifyToken, updateProduct);
 router.delete('/:id', verifyToken, requireAdmin, deleteProduct);
 
-router.get('/low-stock', verifyToken, getLowStockProducts);
-router.post('/batch-delete', verifyToken, requireAdmin, batchDeleteProducts);
-router.get('/audit/logs', verifyToken, getAuditLogs);
 export default router;
+
