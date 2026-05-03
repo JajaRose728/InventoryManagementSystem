@@ -22,6 +22,7 @@ export class AuthService {
   user = computed(() => this.currentUser());
   isLoggedIn = computed(() => !!this.currentUser());
   isAdmin = computed(() => this.currentUser()?.role === 'admin');
+  isManager = computed(() => this.currentUser()?.role === 'manager' || this.currentUser()?.role === 'admin');
   isLoading = computed(() => this.loading());
 
   constructor() {

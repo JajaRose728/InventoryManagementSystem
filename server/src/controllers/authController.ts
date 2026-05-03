@@ -203,3 +203,43 @@ export async function updateUserProfile(req: AuthRequest, res: Response) {
     });
   }
 }
+
+/**
+ * Forgot Password - Send reset email (Admin can trigger for any user)
+ */
+export async function forgotPassword(req: AuthRequest, res: Response) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    // Send password reset email via Firebase Admin
+    await getAuth().generatePasswordResetLink(email);
+
+    res.json({
+      success: true,
+      message: 'Password reset link sent to email'
+    });
+  } catch (error: any) {
+    console.error('Forgot password error:', error);
+
+    // For security, still return success even if user not found
+    // This prevents enumeration attacks
+    if (error.code === 'auth/user-not-found') {
+      return res.json({
+        success: true,
+        message: 'If user exists, password reset link will be sent'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send reset link'
+    });
+  }
+}

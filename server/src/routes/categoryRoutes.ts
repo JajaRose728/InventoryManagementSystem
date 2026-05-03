@@ -14,7 +14,8 @@ import {
   getCategory,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  batchDeleteCategories
 } from '../controllers/categoryController';
 
 const router = Router();
@@ -27,5 +28,8 @@ router.get('/:id', verifyToken, getCategory);
 router.post('/', verifyToken, requireAdmin, createCategory);
 router.put('/:id', verifyToken, requireAdmin, updateCategory);
 router.delete('/:id', verifyToken, requireAdmin, deleteCategory);
+
+// Batch delete (Admin only)
+router.post('/batch-delete', verifyToken, requireAdmin, batchDeleteCategories);
 
 export default router;

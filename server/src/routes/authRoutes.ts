@@ -12,7 +12,8 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
-  updateUserProfile
+  updateUserProfile,
+  forgotPassword
 } from '../controllers/authController';
 
 const router = Router();
@@ -20,6 +21,7 @@ const router = Router();
 // Public routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/forgot-password', forgotPassword);
 
 // Protected routes
 router.get('/me', verifyToken, getCurrentUser);

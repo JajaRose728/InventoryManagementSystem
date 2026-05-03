@@ -177,3 +177,48 @@ export async function deleteCategory(req: AuthRequest, res: Response) {
     });
   }
 }
+
+/**
+ * Batch delete categories (Admin only)
+ */
+export async function batchDeleteCategories(req: AuthRequest, res: Response) {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No category IDs provided'
+      });
+    }
+
+    const db = getFirestore();
+    const errors: string[] = [];
+
+    for (const id of ids) {
+      // Check for products in this category
+      const products = await db.collection('products')
+        .where('categoryId', '==', id)
+        .get();
+
+      if (!products.empty) {
+        errors.push(`Category ${id} has products, skipping`);
+        continue;
+      }
+
+      await db.collection('categories').doc(id).delete();
+    }
+
+    res.json({
+      success: true,
+      message: `${ids.length - errors.length} category(ies) deleted successfully`,
+      deletedCount: ids.length - errors.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}

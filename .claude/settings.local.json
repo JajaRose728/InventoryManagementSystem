@@ -5,7 +5,13 @@
       "Bash(firebase emulators:start --only auth,firestore)",
       "Bash(curl -s \"http://localhost:8080/v1/projects/inventory-system-demo/databases/\\(default\\)/documents\" -H \"Content-Type: application/json\")",
       "Bash(npm run build)",
-      "Bash(npm install firebase --legacy-peer-deps)"
+      "Bash(npm install firebase --legacy-peer-deps)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(ng build)",
+      "Bash(firebase deploy --only hosting)",
+      "Bash(firebase deploy --only firestore)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\MikhaiLev\\\\Inventory-Management-System\" -Name)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\MikhaiLev\\\\Inventory-Management-System\\\\dist\\\\inventory-management-system\\\\browser\" -Name)"
     ]
   }
 }

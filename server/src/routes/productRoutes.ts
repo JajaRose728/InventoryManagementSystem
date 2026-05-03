@@ -15,6 +15,9 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
+  batchDeleteProducts,
+  getLowStockProducts,
+  getAuditLogs
 } from '../controllers/productController';
 
 const router = Router();
@@ -26,4 +29,7 @@ router.post('/', verifyToken, createProduct);
 router.put('/:id', verifyToken, updateProduct);
 router.delete('/:id', verifyToken, requireAdmin, deleteProduct);
 
+router.get('/low-stock', verifyToken, getLowStockProducts);
+router.post('/batch-delete', verifyToken, requireAdmin, batchDeleteProducts);
+router.get('/audit/logs', verifyToken, getAuditLogs);
 export default router;

@@ -6,3 +6,13 @@ logs
 *.log
 .idea
 .vscode
+
+# Firebase / Sensitive
+firebase*.json
+*-service-account.json
+firebase-adminsdk.json
+
+# Uploads
+uploads/
+*.jpg
+*.jfif

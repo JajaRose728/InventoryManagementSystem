@@ -9,11 +9,14 @@ import { getFirestore } from '../config/firebase';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Get all products with optional filtering
+ * Get all products with optional filtering and pagination
  */
 export async function getProducts(req: AuthRequest, res: Response) {
   try {
-    const { categoryId, status, search } = req.query;
+    const { categoryId, status, search, page, pageSize } = req.query;
+    const currentPage = parseInt(page as string) || 1;
+    const size = parseInt(pageSize as string) || 10;
+
     const db = getFirestore();
     let query: any = db.collection('products');
 
@@ -217,6 +220,123 @@ export async function deleteProduct(req: AuthRequest, res: Response) {
     res.json({
       success: true,
       message: 'Product deleted successfully'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Batch delete products (Admin only)
+ */
+export async function batchDeleteProducts(req: AuthRequest, res: Response) {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No product IDs provided'
+      });
+    }
+
+    const db = getFirestore();
+    const deletePromises = ids.map((id: string) =>
+      db.collection('products').doc(id).delete()
+    );
+
+    await Promise.all(deletePromises);
+
+    // Log batch action
+    await logAuditAction(
+      req.user?.uid || 'system',
+      'batch_delete_products',
+      'product',
+      ids.join(','),
+      { count: ids.length, ids }
+    );
+
+    res.json({
+      success: true,
+      message: `${ids.length} product(s) deleted successfully`,
+      deletedCount: ids.length
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Get low stock products
+ */
+export async function getLowStockProducts(req: AuthRequest, res: Response) {
+  try {
+    const { threshold } = req.query;
+    const minThreshold = parseInt(threshold as string) || 10;
+
+    const db = getFirestore();
+    const snapshot = await db.collection('products').get();
+    const products = snapshot.docs
+      .map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      .filter((p: any) => p.quantity < (p.minStockLevel || minThreshold));
+
+    res.json({
+      success: true,
+      data: products,
+      total: products.length,
+      threshold: minThreshold
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Get audit logs / history
+ */
+export async function getAuditLogs(req: AuthRequest, res: Response) {
+  try {
+    const { entityType, entityId, limit, offset } = req.query;
+    const pageLimit = parseInt(limit as string) || 20;
+    const pageOffset = parseInt(offset as string) || 0;
+
+    const db = getFirestore();
+    let logsRef: any = db.collection('auditLogs');
+
+    if (entityType) {
+      logsRef = logsRef.where('entityType', '==', entityType);
+    }
+    if (entityId) {
+      logsRef = logsRef.where('entityId', '==', entityId);
+    }
+
+    logsRef = logsRef.orderBy('timestamp', 'desc').limit(pageLimit).offset(pageOffset);
+    const snapshot = await logsRef.get();
+
+    const logs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+    // Get total count for pagination
+    let countRef: any = db.collection('auditLogs');
+    if (entityType) countRef = countRef.where('entityType', '==', entityType);
+    if (entityId) countRef = countRef.where('entityId', '==', entityId);
+    const totalSnapshot = await countRef.get();
+
+    res.json({
+      success: true,
+      data: logs,
+      total: totalSnapshot.size,
+      page: Math.floor(pageOffset / pageLimit) + 1,
+      pageSize: pageLimit,
+      totalPages: Math.ceil(totalSnapshot.size / pageLimit)
     });
   } catch (error: any) {
     res.status(500).json({

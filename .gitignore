@@ -42,3 +42,22 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Firebase / Sensitive
+firebase*.json
+*-service-account.json
+firebase-adminsdk.json
+src/environments/firebase*.json
+functions/firebase*.json
+server/firebase*.json
+
+# Uploads & Large files
+**/uploads/
+*.jpg
+*.jpeg
+*.jfif
+*.png
+
+# Logs & Debug
+*.log
+*-debug.log
