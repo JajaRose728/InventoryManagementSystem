@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { FirebaseService } from '../../services/firebase.service';
 
 @Component({
@@ -139,6 +140,8 @@ export class AuthLoginComponent {
     if (localStorage.getItem('darkMode') === 'true') this.darkMode.set(true);
   }
 
+  private authService = inject(AuthService);
+
   private validateInput(input: string): boolean {
     if (!input || input.trim().length === 0) return false;
     return true;
@@ -193,28 +196,42 @@ export class AuthLoginComponent {
     this.error.set('');
     this.successMsg.set('');
 
+    const fb = await import('firebase/auth');
+    const auth = FirebaseService.getAuth();
+    if (!auth) {
+      this.error.set('Authentication service not ready. Please refresh the page.');
+      this.submitting.set(false);
+      return;
+    }
+
     try {
       const fb = await import('firebase/auth');
       const auth = FirebaseService.getAuth();
       if (!auth) { this.error.set('Authentication service not ready. Please refresh the page.'); this.submitting.set(false); return; }
 
       if (this.loginMode()) {
-        const { signInWithEmailAndPassword } = fb;
-        await signInWithEmailAndPassword(auth, sanitizedEmail, this.password);
-        try {
-          const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-          const db = FirebaseService.getFirestore();
-          if (db) {
-            await addDoc(collection(db, 'activityLogs'), {
-              userId: auth.currentUser?.uid || '',
-              userEmail: sanitizedEmail,
-              action: 'login',
-              details: 'User logged in',
-              timestamp: serverTimestamp()
-            });
-          }
-        } catch (logError) { console.warn('Failed to log activity:', logError); }
-        this.router.navigate(['/dashboard']);
+        const result = await this.authService.login(sanitizedEmail, this.password);
+        if (result.success) {
+          try {
+            const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+            const auth = FirebaseService.getAuth();
+            const db = FirebaseService.getFirestore();
+            if (db && auth?.currentUser?.uid) {
+              await addDoc(collection(db, 'activityLogs'), {
+                userId: auth.currentUser.uid,
+                userEmail: sanitizedEmail,
+                action: 'login',
+                details: 'User logged in',
+                timestamp: serverTimestamp()
+              });
+            }
+          } catch (logError) { console.warn('Failed to log activity:', logError); }
+          
+          await this.waitForAuthState();
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.error.set(result.message || 'Login failed');
+        }
       } else {
         const { createUserWithEmailAndPassword } = fb;
         const userCred = await createUserWithEmailAndPassword(auth, sanitizedEmail, this.password);
@@ -230,21 +247,28 @@ export class AuthLoginComponent {
         this.email = ''; this.password = ''; this.setMode('login');
       }
     } catch (e: any) {
-      const errorCode = e.code || e.message || 'unknown';
-      switch (errorCode) {
-        case 'auth/invalid-email': this.error.set('Invalid email address format'); break;
-        case 'auth/user-not-found': this.error.set('No account found with this email'); break;
-        case 'auth/wrong-password': this.error.set('Incorrect password'); break;
-        case 'auth/email-already-in-use': this.error.set('Email is already registered'); break;
-        case 'auth/weak-password': this.error.set('Password is too weak'); break;
-        case 'auth/invalid-credential': this.error.set('Invalid email or password'); break;
-        case 'auth/too-many-requests': this.error.set('Too many attempts. Try again later'); break;
-        case 'auth/network-request-failed': this.error.set('Network error. Check connection'); break;
-        default: this.error.set(e.message || 'An error occurred');
-      }
-      return; // Stop execution on error
+      this.error.set(e.message || 'An error occurred');
+    } finally {
+      this.submitting.set(false);
     }
-    this.submitting.set(false);
+  }
+
+  private async waitForAuthState(maxWait = 2000): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const startTime = Date.now();
+      const checkAuth = () => {
+        if (this.authService.isLoggedIn()) {
+          resolve();
+          return;
+        }
+        if (Date.now() - startTime > maxWait) {
+          reject(new Error('Auth state timeout'));
+          return;
+        }
+        setTimeout(checkAuth, 100);
+      };
+      checkAuth();
+    });
   }
 
   async sendResetLink() {

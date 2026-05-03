@@ -30,11 +30,10 @@ import { serverTimestamp } from 'firebase/firestore';
       <nav class="backdrop-blur-md sticky top-0 z-50 shadow-lg"
            [class]="darkMode() ? 'bg-slate-900/90 border-b border-slate-700' : 'bg-white/90'">
         <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <a [href]="isEditMode ? '/dashboard' : '/dashboard'"
-             class="flex items-center gap-2 font-medium transition-colors"
+          <button type="button" (click)="goBack()" class="flex items-center gap-2 font-medium transition-colors"
              [class]="darkMode() ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'">
             <span>←</span> Back to Dashboard
-          </a>
+          </button>
           <div class="flex items-center gap-3">
             <button (click)="toggleDark()" class="p-2 rounded-lg transition-colors"
                     [class]="darkMode() ? 'hover:bg-slate-700' : 'hover:bg-gray-200'">

@@ -21,9 +21,7 @@ let firebaseApp: admin.app.App | null = null;
 function initializeFirebase() {
   if (firebaseApp) return firebaseApp;
   
-  const useEmulator = process.env.USE_FIRESTORE_EMULATOR === 'true';
-  const serviceAccountPath = './firebase-service-account.json';
-  const hasServiceAccount = existsSync(serviceAccountPath);
+  // Production: Use environment variables (Render)\n  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {\n    firebaseApp = admin.initializeApp({\n      credential: admin.credential.cert({\n        projectId: process.env.FIREBASE_PROJECT_ID,\n        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,\n        privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\\\n/g, '\\n'),\n      }),\n    });\n    console.log('✅ Firebase Production Env Vars Mode (Render)');\n    return firebaseApp;\n  }\n\n  const useEmulator = process.env.USE_FIRESTORE_EMULATOR === 'true';\n  const serviceAccountPath = './firebase-service-account.json';\n  const hasServiceAccount = existsSync(serviceAccountPath);
   
   if (useEmulator && !hasServiceAccount) {
     // Emulator mode - no credentials needed
@@ -63,10 +61,10 @@ function initializeFirebase() {
 
 // Initialize Firebase
 initializeFirebase();
-const db = admin.database();
+const db = admin.firestore();
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:4200' }));
+app.use(cors({ origin: process.env.NODE_ENV === 'production' ? '*' : 'http://localhost:4200' }));
 app.use(express.json());
 
 // Health check

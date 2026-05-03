@@ -1,9 +1,6 @@
 {
-  "projects": {
-    "default": "inventorymanagement-8be56"
-  },
   "hosting": {
-    "public": "dist/inventory-management-system/browser",
+    "public": "dist/inventory-management-system",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -15,11 +12,5 @@
         "destination": "/index.html"
       }
     ]
-  },
-  "firestore": {
-    "rules": "firestore.rules"
-  },
-  "storage": {
-    "rules": "storage.rules"
   }
 }

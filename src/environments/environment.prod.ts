@@ -10,5 +10,10 @@ export const environment = {
     messagingSenderId: '394603767513',
     appId: '1:394603767513:web:523a5ec09a2cf0165580c8',
     measurementId: 'G-YOUR_MEASUREMENT_ID'
+  },
+  supabase: {
+    url: 'https://mialaqnrakvavcipqvvo.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pYWxhcW5yYWt2YXZjaXBxdnZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3ODM4NTksImV4cCI6MjA5MzM1OTg1OX0.6IplD2J5cx5C6YJTYbgKahgpEkgsa7UT66yYczKSQSA'
   }
 };
+
