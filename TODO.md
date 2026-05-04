@@ -1,15 +1,31 @@
-# Firebase Hosting Deployment TODO
-Status: 📋 IN PROGRESS
+# Deployment Fix Progress
 
-## Steps:
-- [ ] 1. Install Firebase CLI: `npm install -g firebase-tools`
-- [ ] 2. Login: `firebase login`
-- [ ] 3. Select project: `firebase use inventorymanagement-8be56` (or `firebase init hosting`)
-- [ ] 4. Build: `ng build`
-- [ ] 5. Deploy: `firebase deploy --only hosting`
-- [ ] 6. Test: Visit https://inventorymanagement-8be56.web.app
-- [x] 7. Created firebase.json and DEPLOY_FIREBASE.bat
+## Completed:
+- [x] Firebase CLI verified (v15.13.0)
+- [x] Correct project selected (inventorymanagement-8be56 - current)
+- [x] Angular build successful (dist/inventory-management-system)
+- [x] Initial deploy (15 files)
+- [x] Added missing assets (favicon.ico, 404.html) - redeploy (17 files)
+- [x] Verified latest release on live channel
 
-## Quick Deploy
-Run: `DEPLOY_FIREBASE.bat`
+## Issue:
+App loads index.html but stutters/hangs during Angular bootstrap (likely Firebase APP_INITIALIZER blocking)
+
+## Completed:
+- [x] Fix blocking Firebase init in app.config.ts (removed APP_INITIALIZER)
+- [x] Made FirebaseService init lazy (ensureAppInitialized(), updated getFirestore/getAuth/getStorage)
+- [x] Fixed all FirebaseService.initializeFirebase() calls
+- [x] Rebuild successful
+- [x] Redeployed to Firebase (live channel updated)
+
+## Test:
+Visit https://inventorymanagement-8be56.web.app - app should now load without stuttering. Login screen should appear immediately.
+
+**Frontend deployment complete!** 🎉
+
+## Testing Commands:
+```bash
+npm run build
+firebase deploy --only hosting
+```
 

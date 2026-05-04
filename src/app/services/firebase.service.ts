@@ -25,39 +25,30 @@ export class FirebaseService {
   /**
    * Initialize Firebase - Synchronous for APP_INITIALIZER
    */
-  static initializeFirebase(): Promise<FirebaseAppType> {
-    return new Promise((resolve) => {
-      const apps = getApps();
-      if (apps.length > 0) {
-        this.app = apps[0];
-      } else {
-        this.app = initializeApp(environment.firebase);
-      }
-
-      if (environment.useEmulators) {
-        this.connectToEmulators();
-      }
-
-      console.log('Firebase initialized:', environment.firebase.projectId);
-      resolve(this.app);
-    });
-  }
-
-  /**
-   * Synchronous initialize (for backward compatibility)
-   */
-  static initializeFirebaseSync(): FirebaseAppType {
+static ensureAppInitialized(): FirebaseAppType {
+  if (!this.app) {
     const apps = getApps();
-    if (apps.length > 0) {
-      this.app = apps[0];
-    } else {
+    if (apps.length === 0) {
       this.app = initializeApp(environment.firebase);
+      console.log('Firebase initialized:', environment.firebase.projectId);
+    } else {
+      this.app = apps[0];
     }
+    
     if (environment.useEmulators) {
       this.connectToEmulators();
     }
-    return this.app;
   }
+  return this.app;
+}
+
+/** Lazy init - call ensureAppInitialized() first */
+static getApp(): FirebaseAppType {
+  if (!this.app) {
+    this.ensureAppInitialized();
+  }
+  return this.app!;
+}
 
   /**
    * Connect to Firebase emulators for local development
@@ -82,30 +73,33 @@ export class FirebaseService {
   /**
    * Get Firestore instance
    */
-  static getFirestore(): Firestore | null {
-    if (!this.db && this.app) {
-      this.db = getFirestore(this.app);
-    }
-    return this.db;
+static getFirestore(): Firestore {
+  this.ensureAppInitialized();
+  if (!this.db) {
+    this.db = getFirestore(this.getApp());
   }
+  return this.db!;
+}
 
   /**
    * Get Auth instance
    */
-  static getAuth(): Auth | null {
-    if (!this.auth && this.app) {
-      this.auth = getAuth(this.app);
-    }
-    return this.auth;
+static getAuth(): Auth {
+  this.ensureAppInitialized();
+  if (!this.auth) {
+    this.auth = getAuth(this.getApp());
   }
+  return this.auth!;
+}
 
   /**
    * Get Storage instance
    */
-  static getStorage(): FirebaseStorage | null {
-    if (!this.storage && this.app) {
-      this.storage = getStorage(this.app);
-    }
-    return this.storage;
+static getStorage(): FirebaseStorage {
+  this.ensureAppInitialized();
+  if (!this.storage) {
+    this.storage = getStorage(this.getApp());
   }
+  return this.storage!;
+}
 }

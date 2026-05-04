@@ -1,7 +1,3 @@
-/**
- * Dashboard Component - Dark Mode Only
- */
-
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';

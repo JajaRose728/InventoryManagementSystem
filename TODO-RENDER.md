@@ -10,13 +10,7 @@ Procfile: web: npm start
 ## [ ] 4. Git commit & push
 git add . && git commit -m \"Prepare backend for Render deploy\" && git push origin main
 
-## [ ] 5. Manual Render Setup (USER)
-- render.com dashboard > New Web Service
-- Connect GitHub repo (create if needed)
-- Root: server/
-- Build: npm install
-- Start: npm start
-- Env: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY (multi-line)
+## [✅] 5. Code Updates Complete\n- Fixed private key parsing (.replace(/\\n/g, '\n'))\n- Added README.md with exact env var format\n- server/src/index.ts Render-ready
 
 ## [ ] 6. Update Frontend env.prod.ts
 backendUrl: 'https://your-app.onrender.com/api'

@@ -232,8 +232,7 @@ export class ProductFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    FirebaseService.initializeFirebase();
-    this.db = FirebaseService.getFirestore();
+  this.db = FirebaseService.getFirestore();
 
     // Get current user
     const auth = getAuth();

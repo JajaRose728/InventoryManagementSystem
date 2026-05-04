@@ -76,8 +76,7 @@ export class FirebaseTestComponent implements OnInit {
   async testConnection() {
     try {
       this.status = 'Initializing Firebase...';
-      FirebaseService.initializeFirebase();
-      this.db = FirebaseService.getFirestore();
+    this.db = FirebaseService.getFirestore();
       this.auth = FirebaseService.getAuth();
 
       this.status = this.db && this.auth
