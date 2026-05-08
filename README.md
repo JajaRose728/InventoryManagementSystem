@@ -37,6 +37,8 @@ Password: admin123
 - **Product Management**: Full CRUD operations (Create, Read, Update, Delete)
 - **Category Management**: Full CRUD operations for organizing products
 - **Search & Filter**: Search products by name and filter by category
+- **File Upload**: Upload product images & documents via Supabase Storage
+- **Audit Logs**: Track all user actions (create, update, delete operations)
 - **Responsive Design**: Works on desktop and mobile with Tailwind CSS
 - **Component Architecture**: Modular UI with separate pages and forms
 - **Tab Navigation**: Easy switching between Products and Categories
@@ -55,6 +57,8 @@ Password: admin123
 - ✅ Input validation
 - ✅ Authentication & Authorization (JWT-style tokens, role-based)
 - ✅ Search, Filtering & Pagination (search and category filter)
+- ✅ File Upload (Supabase integration)
+- ✅ Audit Logging (action tracking)
 - ✅ API documentation
 - ✅ User Registration & Login
 - ✅ Full frontend-backend integration
@@ -79,8 +83,9 @@ Password: admin123
 - **Hosting**: Render (render.com)
 - **File**: `server/src/index.ts`
 - **Features**:
-  - 10 REST API endpoints
-  - In-memory data storage (demo data)
+  - REST API endpoints (products, categories, auth, uploads, audit logs)
+  - File upload handling with Supabase integration
+  - Audit logging for all operations
   - CORS configuration
   - Swagger UI documentation
   - Error handling & success responses
@@ -89,7 +94,8 @@ Password: admin123
 ### Database & Storage
 - **Authentication**: Firebase Auth
 - **Database**: Firebase Firestore (real-time document store)
-- **Storage**: Supabase Storage (file uploads & media)
+- **File Storage**: Supabase Storage (product images, documents, uploads)
+- **Audit Logs**: Supabase Database (action history & tracking)
 - **Connection**: Express backend connects to Firebase & Supabase services
 
 ---
@@ -122,6 +128,7 @@ GET    /api/products         - Get all products (supports filtering)
 POST   /api/products         - Create new product
 PUT    /api/products/:id     - Update product
 DELETE /api/products/:id     - Delete product
+POST   /api/products/:id/upload - Upload product image/file
 ```
 
 ### Categories
@@ -130,6 +137,14 @@ GET    /api/categories       - Get all categories
 POST   /api/categories       - Create new category
 PUT    /api/categories/:id   - Update category
 DELETE /api/categories/:id   - Delete category
+```
+
+### Audit & Files
+```
+GET    /api/audit-logs       - Get audit log entries
+GET    /api/audit-logs?action=create - Filter logs by action
+POST   /api/upload           - Upload file to Supabase Storage
+GET    /api/file/:fileId     - Retrieve uploaded file
 ```
 
 ### Utility
@@ -285,15 +300,17 @@ curl http://localhost:3000/api/categories
 
 ### What's Included
 1. ✅ **Frontend**: Fully functional HTML/CSS/JavaScript interface
-2. ✅ **Backend**: Working Express REST API
+2. ✅ **Backend**: Working Express REST API with file handling
 3. ✅ **Documentation**: Clear code comments and API documentation
 4. ✅ **Demo Data**: Pre-loaded data for immediate testing
 5. ✅ **Authentication**: Login system with token storage
-6. ✅ **Responsive Design**: Tailwind CSS styling
-7. ✅ **CRUD Operations**: Full management of products and categories
-8. ✅ **Search & Filter**: Real-time product filtering
-9. ✅ **Tab Navigation**: Easy switching between features
-10. ✅ **API Documentation**: Swagger UI available
+6. ✅ **File Upload**: Upload product images via Supabase Storage
+7. ✅ **Audit Logs**: Complete action history and tracking
+8. ✅ **CRUD Operations**: Full management of products and categories
+9. ✅ **Search & Filter**: Real-time product filtering
+10. ✅ **Responsive Design**: Tailwind CSS styling
+11. ✅ **Tab Navigation**: Easy switching between features
+12. ✅ **API Documentation**: Swagger UI available
 
 ### Grading Checklist
 - ✅ All guidelines requirements met
@@ -301,6 +318,8 @@ curl http://localhost:3000/api/categories
 - ✅ CRUD operations working for Categories
 - ✅ Authentication system implemented
 - ✅ Search and filtering functional
+- ✅ File upload functionality (Supabase integration)
+- ✅ Audit logging system (action tracking)
 - ✅ Responsive design with Tailwind CSS
 - ✅ API documentation available
 - ✅ Code is clean and maintainable
@@ -411,9 +430,13 @@ npm run dev
 - Resets on server restart (good for testing)
 
 ### Future Enhancements
-- [ ] Add Firebase Firestore integration
+- [ ] Add advanced user roles and permissions
+- [ ] Add pagination for large datasets
 - [ ] Add offline support with ServiceWorkers
 - [ ] Add PWA capabilities
+- [ ] Add export audit logs to CSV/PDF
+- [ ] Add bulk product upload
+- [ ] Add product reviews and ratings
 
 ---
 
