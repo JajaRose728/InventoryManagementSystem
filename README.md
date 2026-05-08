@@ -7,22 +7,24 @@ A simple, student-friendly full-stack inventory management system built for ITAS
 ### Prerequisites
 - Node.js 18+ installed
 
-### Run Backend Server
-```bash
-cd server
-npm install
-npm run dev
-# Server runs on http://localhost:3000
-```
+### Setup Steps
+1. **Run Backend Server**
+   ```bash
+   cd server
+   npm install
+   npm run dev
+   # Server runs on http://localhost:3000
+   ```
 
-### Run Frontend
-1. Open `index.html` in your browser
-2. Or drag `index.html` into browser
-3. Or use VS Code Live Server extension
+2. **Run Frontend**
+   - Open `index.html` in your browser, or
+   - Drag `index.html` into browser, or
+   - Use VS Code Live Server extension
 
-### Demo Credentials
+### Demo Credentials (For Testing Only)
+> ⚠️ **Development/Demo Only** - Do NOT use these in production
 ```
-Email: admin@demo.com
+Email:    admin@demo.com
 Password: admin123
 ```
 
@@ -74,6 +76,7 @@ Password: admin123
 
 ### Backend
 - **Technology**: Node.js + Express 4.18.2 + TypeScript 5.3.3
+- **Hosting**: Render (render.com)
 - **File**: `server/src/index.ts`
 - **Features**:
   - 10 REST API endpoints
@@ -82,6 +85,26 @@ Password: admin123
   - Swagger UI documentation
   - Error handling & success responses
   - Request validation
+
+### Database & Storage
+- **Authentication**: Firebase Auth
+- **Database**: Firebase Firestore (real-time document store)
+- **Storage**: Supabase Storage (file uploads & media)
+- **Connection**: Express backend connects to Firebase & Supabase services
+
+---
+
+## 📸 Screenshots & Visual Guide
+
+This section showcases the key features and interface of the Inventory Management System.
+
+**Screenshots are located in the `screenshots/` folder:**
+- Login interface
+- Product dashboard
+- Category management
+- Add/Edit product modals
+- Search and filtering functionality
+- Responsive mobile view
 
 ---
 
@@ -117,9 +140,11 @@ GET    /api-docs             - Swagger UI documentation
 
 ---
 
-## 🚀 Demo Data
+## 🚀 Demo Data (Development Only)
 
-### Default User
+> ⚠️ **For Testing & Demo Purposes Only** - Do NOT use in production
+
+### Default User Account
 ```json
 {
   "email": "admin@demo.com",
@@ -127,6 +152,7 @@ GET    /api-docs             - Swagger UI documentation
   "role": "admin"
 }
 ```
+**This account is reset on every server restart.**
 
 ### Sample Products
 - **Laptop** (Electronics) - $999.99 - Qty: 15
@@ -136,6 +162,53 @@ GET    /api-docs             - Swagger UI documentation
 ### Sample Categories
 - **Electronics** - "Electronic devices and gadgets"
 - **Office Supplies** - "Office materials and equipment"
+
+---
+
+## 🔒 Security & Environment Variables
+
+### Important: Sensitive Data Protection
+
+⚠️ **NEVER commit these files to version control:**
+- `server/firebase-service-account.json` - Firebase admin credentials
+- `.env` files with Firebase keys
+- Supabase API keys and connection strings
+- Any private configuration files
+
+### Required .gitignore Entries
+```
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+firebase-service-account.json
+*.log
+.DS_Store
+```
+
+### Environment Variables (For Production)
+
+When deploying to Render, set these in your dashboard:
+
+```
+NODE_ENV=production
+PORT=3000
+
+FIREBASE_API_KEY=<your_firebase_key>
+FIREBASE_AUTH_DOMAIN=<your_auth_domain>
+FIREBASE_PROJECT_ID=<your_project_id>
+FIREBASE_STORAGE_BUCKET=<your_storage_bucket>
+FIREBASE_MESSAGING_SENDER_ID=<your_sender_id>
+FIREBASE_APP_ID=<your_app_id>
+
+SUPABASE_URL=<your_supabase_url>
+SUPABASE_ANON_KEY=<your_anon_key>
+SUPABASE_SERVICE_KEY=<your_service_key>
+```
+
+For Firebase hosting environment variables, configure in `firebase.json` or Firebase Console.
 
 ---
 
@@ -242,29 +315,45 @@ curl http://localhost:3000/api/categories
 | Layer | Technologies |
 |-------|---------------|
 | Frontend | HTML5, CSS3 (Tailwind CDN), Vanilla JavaScript |
+| Hosting (Frontend) | Firebase Hosting |
 | Backend | Node.js, Express, TypeScript |
+| Hosting (Backend) | Render |
+| Database | Firebase Firestore |
+| Storage | Supabase Storage |
 | Styling | Tailwind CSS (via CDN) |
 | API Documentation | Swagger UI |
-| Data Storage | In-memory (demo) / Firebase (planned) |
-| Deployment | Vercel (frontend) + Render (backend) |
 
 ---
 
 ## 🚀 Deployment
 
-### Frontend to Vercel
+### Frontend to Firebase Hosting
 ```bash
-# Push index.html and public/ folder to Vercel
-# Can be deployed directly as static site
+firebase login
+firebase deploy --only hosting
+
+# Or use Firebase Console for drag-and-drop deployment
 ```
 
 ### Backend to Render
 ```bash
 # Push server/ folder to Render
-# Set environment variables in Render dashboard:
-# - PORT=3000
-# - NODE_ENV=production
+# Set environment variables in Render dashboard
 ```
+
+### Firebase Setup
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Create a new project
+3. Enable Firestore Database
+4. Enable Authentication (Email/Password)
+5. Create a Storage bucket
+6. Download service account JSON to `server/firebase-service-account.json`
+
+### Supabase Setup
+1. Go to [Supabase](https://supabase.com)
+2. Create a new project
+3. Create storage buckets for uploads
+4. Get API credentials from Settings > API
 
 ---
 
@@ -355,44 +444,5 @@ For questions about:
 
 ---
 
-## ✅ Pre-Submission Checklist
 
-Before submitting your final project, ensure:
 
-- [ ] Backend server runs without errors: `npm run dev` in server folder
-- [ ] Frontend loads without errors: Open `index.html` in browser
-- [ ] Can login with `admin@demo.com` / `admin123`
-- [ ] Products tab shows 3 demo products
-- [ ] Categories tab shows 2 demo categories
-- [ ] Can add new products
-- [ ] Can edit existing products
-- [ ] Can delete products
-- [ ] Can add new categories
-- [ ] Can edit existing categories
-- [ ] Can delete categories
-- [ ] Search products functionality works
-- [ ] Filter by category works
-- [ ] Responsive design works on mobile browser
-- [ ] All API endpoints working (test with Swagger UI)
-- [ ] Code compiles without errors
-
----
-
-**Ready to submit! 🎉**
-#   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m 1  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m 1  
- "# InventoryManagementSystem1" 
-#   I n v e n t o r y M a n a g e m e n t S y s t e m 1  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- #   I n v e n t o r y M a n a g e m e n t S y s t e m  
- 
