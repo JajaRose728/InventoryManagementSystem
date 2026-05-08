@@ -412,10 +412,6 @@ npm run dev
 
 ### Future Enhancements
 - [ ] Add Firebase Firestore integration
-- [ ] Add file upload feature
-- [ ] Add user roles and permissions
-- [ ] Add audit logging
-- [ ] Add pagination for large datasets
 - [ ] Add offline support with ServiceWorkers
 - [ ] Add PWA capabilities
 
