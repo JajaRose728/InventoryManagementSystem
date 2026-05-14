@@ -1,4 +1,4 @@
-# 📦 Inventory Management System
+<img width="1920" height="1080" alt="GET product" src="https://github.com/user-attachments/assets/4dd469dc-ecf0-48eb-a40d-9a596e7c8260" /># 📦 Inventory Management System
 
 A simple, student-friendly full-stack inventory management system built for ITAS4/ITAS5 final project requirements. Manage products and categories with an intuitive web interface.
 
@@ -103,7 +103,7 @@ Password: admin123
 ## 📸 Screenshots & Visual Guide
 
 This section showcases the key features and interface of the Inventory Management System.
-
+###UI
 Login Screen
 <img width="1919" height="896" alt="Login Screen" src="https://github.com/user-attachments/assets/755b182f-5843-4331-aabc-62ac8266a401" />
 
@@ -127,6 +127,22 @@ Stock Screen
 
 User Screen
 <img width="1919" height="896" alt="User Screen" src="https://github.com/user-attachments/assets/f81c56da-02a6-4ddc-9c13-561cee1cea08" />
+
+###API testing (Using Postman)
+Register User
+<img width="1920" height="1080" alt="Register" src="https://github.com/user-attachments/assets/727ce4ab-dadb-4543-9368-7fd5be1aec30" />
+
+Login User
+<img width="1920" height="1080" alt="Login" src="https://github.com/user-attachments/assets/2384fe9e-afc3-4bf3-b6f7-ff51afde778d" />
+
+POST product
+<img width="1920" height="1080" alt="POST Product" src="https://github.com/user-attachments/assets/11543baa-f41d-4053-9605-f8456ea118e9" />
+GET product
+<img width="1920" height="1080" alt="GET product" src="https://github.com/user-attachments/assets/e0c4fec9-4e05-4d0b-9e90-56d092b9a1af" />
+GET specific product
+<img width="1920" height="1080" alt="GET specific Product" src="https://github.com/user-attachments/assets/b71abfd8-b307-447e-9671-2e3755b3c780" />
+DELETE product
+<img width="1920" height="1080" alt="DELETE Product" src="https://github.com/user-attachments/assets/7d4c13bc-e983-4611-9d40-73f9a013e234" />
 
 **Screenshots are located in the `screenshots/` folder:**
 - Login interface
