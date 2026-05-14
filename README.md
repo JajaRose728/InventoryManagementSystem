@@ -1,4 +1,4 @@
-<img width="1920" height="1080" alt="GET product" src="https://github.com/user-attachments/assets/4dd469dc-ecf0-48eb-a40d-9a596e7c8260" /># 📦 Inventory Management System
+# 📦 Inventory Management System
 
 A simple, student-friendly full-stack inventory management system built for ITAS4/ITAS5 final project requirements. Manage products and categories with an intuitive web interface.
 
@@ -103,7 +103,9 @@ Password: admin123
 ## 📸 Screenshots & Visual Guide
 
 This section showcases the key features and interface of the Inventory Management System.
-###UI
+
+##UI
+
 Login Screen
 <img width="1919" height="896" alt="Login Screen" src="https://github.com/user-attachments/assets/755b182f-5843-4331-aabc-62ac8266a401" />
 
@@ -128,7 +130,8 @@ Stock Screen
 User Screen
 <img width="1919" height="896" alt="User Screen" src="https://github.com/user-attachments/assets/f81c56da-02a6-4ddc-9c13-561cee1cea08" />
 
-###API testing (Using Postman)
+##API testing (Using Postman)
+
 Register User
 <img width="1920" height="1080" alt="Register" src="https://github.com/user-attachments/assets/727ce4ab-dadb-4543-9368-7fd5be1aec30" />
 
