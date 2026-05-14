@@ -104,6 +104,30 @@ Password: admin123
 
 This section showcases the key features and interface of the Inventory Management System.
 
+Login Screen
+<img width="1919" height="896" alt="Login Screen" src="https://github.com/user-attachments/assets/755b182f-5843-4331-aabc-62ac8266a401" />
+
+Register Screen
+<img width="1919" height="897" alt="Register Screen" src="https://github.com/user-attachments/assets/1c1856c9-f46d-4f75-b14b-e880d4af4103" />
+
+User Dashboard
+<img width="1919" height="895" alt="User Dashboard" src="https://github.com/user-attachments/assets/ff22ac9a-4e6d-4947-8577-8f6a57cc8428" />
+<img width="1919" height="898" alt="User Dashboard 2" src="https://github.com/user-attachments/assets/02640972-d149-4f98-8a5a-6e285cd8e0f9" />
+
+Add Product Screen
+<img width="1919" height="896" alt="Add Product Screen" src="https://github.com/user-attachments/assets/bdca1d47-a2b6-4649-a7b1-055c62bab991" />
+<img width="1919" height="896" alt="Add Product Screen 2" src="https://github.com/user-attachments/assets/c6567a57-b49f-483d-b7db-b1a8d9503fe1" />
+
+Admin Dashboard
+<img width="1919" height="881" alt="Admin Dashboard" src="https://github.com/user-attachments/assets/b0ee0051-a95f-4da9-a27c-3fa06f8ef5ed" />
+<img width="1919" height="897" alt="Admin Dashboard 2" src="https://github.com/user-attachments/assets/b569e825-b8a9-4d21-b24d-97aaecf2f9b3" />
+
+Stock Screen
+<img width="1919" height="847" alt="Stock Screen" src="https://github.com/user-attachments/assets/86232805-db76-4d06-be4d-813698a6a5d2" />
+
+User Screen
+<img width="1919" height="896" alt="User Screen" src="https://github.com/user-attachments/assets/f81c56da-02a6-4ddc-9c13-561cee1cea08" />
+
 **Screenshots are located in the `screenshots/` folder:**
 - Login interface
 - Product dashboard
